@@ -8,27 +8,30 @@
     <title>Spaced-repetition</title>
   </head>
   <body>
-    <header id="clock"></header>
     <main>
-      <h1>Spaced-repetition</h1>
-      <form id="form">
-        <h2>question</h2>
-        <input id="question" type="text" name="question" />
-        <h2>answer</h2>
-        <input id="answer" type="text" name="answer" />
-        <button type="submit">Submit</button>
-      </form>
-      <div id="questions">
-        <div id="Answers">
-          <section id="Type-here">
-            <input type="text" name="Answer" id="TextAnswer" />
-            <button type="submit"></button>
-          </section>
-        </div>
-      </div>
+      <body>
+        <div id="clock"></div>
+        <h1>SRS</h1>
+
+        <div id="questions-container"></div>
+
+        <form id="form">
+          <label>
+            Question:
+            <input type="text" name="question" required />
+          </label>
+          <br />
+          <label>
+            Answer:
+            <input type="text" name="answer" required />
+          </label>
+          <br />
+          <button type="submit">Add question</button>
+        </form>
+      </body>
     </main>
+    <footer>
+      <script src="javaScript/app.js"></script>
+    </footer>
   </body>
-  <footer>
-    <script src="javaScript/app.js"></script>
-  </footer>
 </html>
