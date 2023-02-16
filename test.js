@@ -57,7 +57,7 @@ SrsCard.prototype.ask = function () {
   }
 };
 
-function showAllQuestions() {
+/*function showAllQuestions() {
   const now = new Date();
   const container = document.getElementById("questions-container");
   SrsCard.allCards.forEach((card) => {
@@ -71,7 +71,7 @@ function showAllQuestions() {
     container.appendChild(questionEl);
   });
 }
-showAllQuestions();
+showAllQuestions();*/
 
 // get SrsCards from localStorage if they already exist
 if (localStorage.getItem("allQuestions") != null) {
@@ -103,51 +103,63 @@ form.addEventListener("submit", function (event) {
   localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
 
   form.reset();
+  //temprorary fix to get displayQuestionsFromLocalStorage to run
+  location.reload();
 });
 console.log(form);
 
 function displayQuestionsFromLocalStorage() {
-  const questionsContainer = document.getElementById("textbox-answers");
-
   if (SrsCard.allCards && SrsCard.allCards.length > 0) {
     SrsCard.allCards.forEach((qa) => {
       console.log("next review:  ", qa.nextReview);
       console.log("check what the time is   ", new Date());
-      if (qa.nextReview <= new Date()) {
-        const questionEl = document.createElement("h2");
-        questionEl.textContent = qa.question;
-        questionsContainer.appendChild(questionEl);
+      if (new Date(qa.nextReview).getTime() < new Date().getTime()) {
+        actuallyAskTheQuestion(qa);
+      } else {
+        let timeDiff = new Date(qa.nextReview).getTime() - new Date().getTime();
 
-        const answerInput = document.createElement("input");
-        answerInput.type = "text";
-        answerInput.name = "answer";
-        questionsContainer.appendChild(answerInput);
-
-        const submitBtn = document.createElement("button");
-        submitBtn.textContent = "Submit";
-        submitBtn.setAttribute("type", "submit");
-        questionsContainer.addEventListener("submit", (event) => {
-          event.preventDefault();
-          if (
-            event.target.answer.value.toLowerCase() === qa.answer.toLowerCase()
-          ) {
-            qa.scheduleNextReview(true);
-
-            console.log("you got it right");
-          } else {
-            qa.scheduleNextReview(false);
-
-            console.log("you got it wrong");
-          }
-          localStorage.setItem(
-            "allQuestions",
-            JSON.stringify(SrsCard.allCards)
-          );
-        });
-        questionsContainer.appendChild(submitBtn);
+        console.log(timeDiff);
+        setTimeout(function () {
+          actuallyAskTheQuestion(qa);
+        }, timeDiff);
+        const timeLeftToAnswer = document.createElement("h2");
+        timeLeftToAnswer.textContent = timeDiff;
+        form.appendChild(timeLeftToAnswer);
       }
     });
   }
+}
+
+function actuallyAskTheQuestion(qa) {
+  const questionsContainer = document.getElementById("textbox-answers");
+  const form = document.createElement("form");
+  const questionEl = document.createElement("h2");
+  questionEl.textContent = qa.question;
+  form.appendChild(questionEl);
+
+  const answerInput = document.createElement("input");
+  answerInput.type = "text";
+  answerInput.name = "answer";
+  form.appendChild(answerInput);
+
+  const submitBtn = document.createElement("button");
+  submitBtn.textContent = "Submit";
+  submitBtn.setAttribute("type", "submit");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (event.target.answer.value.toLowerCase() === qa.answer.toLowerCase()) {
+      qa.scheduleNextReview(true);
+      location.reload();
+      console.log("you got it right");
+    } else {
+      qa.scheduleNextReview(false);
+      location.reload();
+      console.log("you got it wrong");
+    }
+    localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
+  });
+  form.appendChild(submitBtn);
+  questionsContainer.appendChild(form);
 }
 window.onload = function () {
   displayQuestionsFromLocalStorage();

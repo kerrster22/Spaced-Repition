@@ -11,27 +11,33 @@
     <main>
       <body>
         <div id="clock"></div>
-        <h1>SRS</h1>
+        <h1>Spaced Repetition Flash cards</h1>
+
+        <div class="SrsCards">
+          <div id="textbox-answers"></div>
+        </div>
 
         <div id="questions-container"></div>
-
-        <form id="form">
-          <label>
-            Question:
-            <input type="text" name="question" required />
-          </label>
-          <br />
-          <label>
-            Answer:
-            <input type="text" name="answer" required />
-          </label>
-          <br />
-          <button type="submit">Add question</button>
-        </form>
+        <fieldset>
+          <form id="form">
+            <label>
+              Question:
+              <input type="text" name="question" required />
+            </label>
+            <br />
+            <label>
+              Answer:
+              <input type="text" name="answer" required />
+            </label>
+            <br />
+            <button type="submit">Add question</button>
+          </form>
+        </fieldset>
       </body>
     </main>
     <footer>
-      <script src="javaScript/app.js"></script>
+      <script src="test.js"></script>
+      <!--<script src="javaScript/app.js"></script>-->
     </footer>
   </body>
 </html>
