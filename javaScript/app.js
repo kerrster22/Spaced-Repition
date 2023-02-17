@@ -14,7 +14,7 @@ SrsCard.allCards = [];
 
 SrsCard.prototype.calculateNextReview = function () {
   const intervals = [
-    1, // Review after 5 minutes
+    1, // Review after 1 minute
     10, // Review after 10 minutes
     60, // Review after 1 hour
     120, // Review after 2 hours
@@ -42,36 +42,6 @@ SrsCard.prototype.scheduleNextReview = function (isCorrect) {
   this.nextReview = this.calculateNextReview();
   localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
 };
-
-SrsCard.prototype.ask = function () {
-  const card = this;
-  const answer = prompt(card.question);
-  if (answer === card.answer) {
-    console.log("Correct!");
-    card.scheduleNextReview(true);
-    return true;
-  } else {
-    console.log("Incorrect!");
-    card.scheduleNextReview(false);
-    return false;
-  }
-};
-
-function showAllQuestions() {
-  const now = new Date();
-  const container = document.getElementById("questions-container");
-  SrsCard.allCards.forEach((card) => {
-    const timeUntilNextReview = card.nextReview - now;
-    const minutesUntilNextReview = Math.floor(timeUntilNextReview / 60000);
-    const secondsUntilNextReview = Math.floor(
-      (timeUntilNextReview % 60000) / 1000
-    );
-    const questionEl = document.createElement("h2");
-    questionEl.innerText = `${card.question} (Next review in ${minutesUntilNextReview} minutes and ${secondsUntilNextReview} seconds)`;
-    container.appendChild(questionEl);
-  });
-}
-showAllQuestions();
 
 // get SrsCards from localStorage if they already exist
 if (localStorage.getItem("allQuestions") != null) {
@@ -103,51 +73,90 @@ form.addEventListener("submit", function (event) {
   localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
 
   form.reset();
+  //temporary fix to get displayQuestionsFromLocalStorage to run
+  location.reload();
 });
 console.log(form);
 
 function displayQuestionsFromLocalStorage() {
-  const questionsContainer = document.getElementById("textbox-answers");
-
   if (SrsCard.allCards && SrsCard.allCards.length > 0) {
     SrsCard.allCards.forEach((qa) => {
       console.log("next review:  ", qa.nextReview);
       console.log("check what the time is   ", new Date());
-      if (qa.nextReview <= new Date()) {
-        const questionEl = document.createElement("h2");
-        questionEl.textContent = qa.question;
-        questionsContainer.appendChild(questionEl);
+      if (new Date(qa.nextReview).getTime() < new Date().getTime()) {
+        actuallyAskTheQuestion(qa);
+      } else {
+        let timeDiff = new Date(qa.nextReview).getTime() - new Date().getTime();
 
-        const answerInput = document.createElement("input");
-        answerInput.type = "text";
-        answerInput.name = "answer";
-        questionsContainer.appendChild(answerInput);
+        console.log(timeDiff);
+        setTimeout(function () {
+          actuallyAskTheQuestion(qa);
+        }, timeDiff);
+        const timeLeftToAnswer = document.createElement("h2");
+        let timeLeft = Math.ceil(timeDiff / 1000); // calculate time left in seconds and round up
+        timeLeftToAnswer.textContent = formatTime(timeLeft); // format time as MM:SS or HH:MM:SS if longer than an hour
+        form.appendChild(timeLeftToAnswer);
 
-        const submitBtn = document.createElement("button");
-        submitBtn.textContent = "Submit";
-        submitBtn.setAttribute("type", "submit");
-        questionsContainer.addEventListener("submit", (event) => {
-          event.preventDefault();
-          if (
-            event.target.answer.value.toLowerCase() === qa.answer.toLowerCase()
-          ) {
-            qa.scheduleNextReview(true);
-
-            console.log("you got it right");
+        // update countdown every second
+        const intervalId = setInterval(() => {
+          timeLeft--;
+          if (timeLeft <= 0) {
+            clearInterval(intervalId);
           } else {
-            qa.scheduleNextReview(false);
-
-            console.log("you got it wrong");
+            timeLeftToAnswer.textContent = formatTime(timeLeft);
           }
-          localStorage.setItem(
-            "allQuestions",
-            JSON.stringify(SrsCard.allCards)
-          );
-        });
-        questionsContainer.appendChild(submitBtn);
+        }, 1000);
+
+        // function to format time as MM:SS or HH:MM:SS if longer than an hour
+        function formatTime(timeInSeconds) {
+          const hours = Math.floor(timeInSeconds / 3600);
+          const minutes = Math.floor((timeInSeconds - hours * 3600) / 60);
+          const seconds = timeInSeconds - hours * 3600 - minutes * 60;
+          if (hours > 0) {
+            return `${hours.toString().padStart(2, "0")}:${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          } else {
+            return `${minutes.toString().padStart(2, "0")}:${seconds
+              .toString()
+              .padStart(2, "0")}`;
+          }
+        }
       }
     });
   }
+}
+
+function actuallyAskTheQuestion(qa) {
+  const questionsContainer = document.getElementById("textbox-answers");
+  const form = document.createElement("form");
+  const questionEl = document.createElement("h2");
+  questionEl.textContent = qa.question;
+  form.appendChild(questionEl);
+
+  const answerInput = document.createElement("input");
+  answerInput.type = "text";
+  answerInput.name = "answer";
+  form.appendChild(answerInput);
+
+  const submitBtn = document.createElement("button");
+  submitBtn.textContent = "Submit";
+  submitBtn.setAttribute("type", "submit");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (event.target.answer.value.toLowerCase() === qa.answer.toLowerCase()) {
+      qa.scheduleNextReview(true);
+      location.reload();
+      console.log("you got it right");
+    } else {
+      qa.scheduleNextReview(false);
+      location.reload();
+      console.log("you got it wrong");
+    }
+    localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
+  });
+  form.appendChild(submitBtn);
+  questionsContainer.appendChild(form);
 }
 window.onload = function () {
   displayQuestionsFromLocalStorage();
