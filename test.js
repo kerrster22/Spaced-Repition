@@ -92,6 +92,7 @@ function displayQuestionsFromLocalStorage() {
         setTimeout(function () {
           actuallyAskTheQuestion(qa);
           showNotification();
+          location.reload();
         }, timeDiff);
         const timeLeftToAnswer = document.createElement("h2");
         let timeLeft = Math.ceil(timeDiff / 1000); // calculate time left in seconds and round up
@@ -205,9 +206,9 @@ function showNotification() {
   if (document.visibilityState === "visible") {
     return;
   }
-  var title = "Questions";
-  var body = "Time to review your questions";
-  var notification = new Notification("Questions", { body });
+  let title = "Questions";
+  let body = "Time to review your questions";
+  let notification = new Notification("Questions", { body });
   notification.onclick = () => {
     notification.close();
     window.parent.focus();
