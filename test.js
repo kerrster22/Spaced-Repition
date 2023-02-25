@@ -14,7 +14,7 @@ SrsCard.allCards = [];
 
 SrsCard.prototype.calculateNextReview = function () {
   const intervals = [
-    1, // Review after 5 minutes
+    1, // Review after 1 minute
     10, // Review after 10 minutes
     60, // Review after 1 hour
     120, // Review after 2 hours
@@ -42,36 +42,6 @@ SrsCard.prototype.scheduleNextReview = function (isCorrect) {
   this.nextReview = this.calculateNextReview();
   localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
 };
-
-SrsCard.prototype.ask = function () {
-  const card = this;
-  const answer = prompt(card.question);
-  if (answer === card.answer) {
-    console.log("Correct!");
-    card.scheduleNextReview(true);
-    return true;
-  } else {
-    console.log("Incorrect!");
-    card.scheduleNextReview(false);
-    return false;
-  }
-};
-
-/*function showAllQuestions() {
-  const now = new Date();
-  const container = document.getElementById("questions-container");
-  SrsCard.allCards.forEach((card) => {
-    const timeUntilNextReview = card.nextReview - now;
-    const minutesUntilNextReview = Math.floor(timeUntilNextReview / 60000);
-    const secondsUntilNextReview = Math.floor(
-      (timeUntilNextReview % 60000) / 1000
-    );
-    const questionEl = document.createElement("h2");
-    questionEl.innerText = `${card.question} (Next review in ${minutesUntilNextReview} minutes and ${secondsUntilNextReview} seconds)`;
-    container.appendChild(questionEl);
-  });
-}
-showAllQuestions();*/
 
 // get SrsCards from localStorage if they already exist
 if (localStorage.getItem("allQuestions") != null) {
@@ -103,7 +73,7 @@ form.addEventListener("submit", function (event) {
   localStorage.setItem("allQuestions", JSON.stringify(SrsCard.allCards));
 
   form.reset();
-  //temprorary fix to get displayQuestionsFromLocalStorage to run
+  //temporary fix to get displayQuestionsFromLocalStorage to run
   location.reload();
 });
 console.log(form);
@@ -121,10 +91,38 @@ function displayQuestionsFromLocalStorage() {
         console.log(timeDiff);
         setTimeout(function () {
           actuallyAskTheQuestion(qa);
+          showNotification();
         }, timeDiff);
         const timeLeftToAnswer = document.createElement("h2");
-        timeLeftToAnswer.textContent = timeDiff;
+        let timeLeft = Math.ceil(timeDiff / 1000); // calculate time left in seconds and round up
+        timeLeftToAnswer.textContent = formatTime(timeLeft); // format time as MM:SS or HH:MM:SS if longer than an hour
         form.appendChild(timeLeftToAnswer);
+
+        // update countdown every second
+        const intervalId = setInterval(() => {
+          timeLeft--;
+          if (timeLeft <= 0) {
+            clearInterval(intervalId);
+          } else {
+            timeLeftToAnswer.textContent = formatTime(timeLeft);
+          }
+        }, 1000);
+
+        // function to format time as MM:SS or HH:MM:SS if longer than an hour
+        function formatTime(timeInSeconds) {
+          const hours = Math.floor(timeInSeconds / 3600);
+          const minutes = Math.floor((timeInSeconds - hours * 3600) / 60);
+          const seconds = timeInSeconds - hours * 3600 - minutes * 60;
+          if (hours > 0) {
+            return `${hours.toString().padStart(2, "0")}:${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          } else {
+            return `${minutes.toString().padStart(2, "0")}:${seconds
+              .toString()
+              .padStart(2, "0")}`;
+          }
+        }
       }
     });
   }
@@ -194,3 +192,31 @@ function currentTime() {
   }, 1000);
 }
 currentTime();
+
+let permission = Notification.permission;
+if (permission === "granted") {
+  showNotification();
+} else if (permission === "default") {
+  requestAndShowPermission();
+} else {
+  alert("Use normal alert");
+}
+function showNotification() {
+  if (document.visibilityState === "visible") {
+    return;
+  }
+  var title = "Questions";
+  var body = "Time to review your questions";
+  var notification = new Notification("Questions", { body });
+  notification.onclick = () => {
+    notification.close();
+    window.parent.focus();
+  };
+}
+function requestAndShowPermission() {
+  Notification.requestPermission(function (permission) {
+    if (permission === "granted") {
+      showNotification();
+    }
+  });
+}
